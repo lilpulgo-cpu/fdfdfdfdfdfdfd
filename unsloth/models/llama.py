@@ -168,23 +168,23 @@ def LlamaAttention_fast_forward_inference(
     # Prefill phase
     # if not hasattr(self, "paged_attention"):
     if do_prefill:
-        self.paged_attention = torch.empty((KV_CACHE_INCREMENT+seq_len+1, 2, bsz, n_kv_heads, head_dim), dtype = dtype, device = ":0")
+        self.paged_attention = torch.empty((KV_CACHE_INCREMENT+seq_len+1, 2, bsz, n_kv_heads, head_dim), dtype = dtype)
         self.paged_attention_K = self.paged_attention[:,0]
         self.paged_attention_V = self.paged_attention[:,1]
         self.paged_attention_K[:seq_len] = K1.permute(2, 0, 1, 3)
         self.paged_attention_V[:seq_len] = V1.permute(2, 0, 1, 3)
-        self.temp_QA = torch.empty((2, bsz, 1, attention_size), dtype = dtype, device = ":0")
-        self.temp_KV = torch.empty((2, bsz, 1, n_kv_heads*head_dim), dtype = dtype, device = ":0")
-        self.RH_Q = torch.empty((bsz, n_heads, 1, head_dim), dtype = dtype, device = ":0")
+        self.temp_QA = torch.empty((2, bsz, 1, attention_size), dtype = dtype)
+        self.temp_KV = torch.empty((2, bsz, 1, n_kv_heads*head_dim), dtype = dtype)
+        self.RH_Q = torch.empty((bsz, n_heads, 1, head_dim), dtype = dtype)
         
         # Mistral Nemo 12b has weird dimensions
         if attention_size != hidden_size:
-            self.temp_O = torch.empty((1, bsz, hidden_size), dtype = dtype, device = ":0")
+            self.temp_O = torch.empty((1, bsz, hidden_size), dtype = dtype)
         else:
             self.temp_O = self.temp_QA[1][:,:,:hidden_size]
         pass
         
-        self.attention = torch.empty((bsz, n_heads, 1, KV_CACHE_INCREMENT+seq_len), dtype = dtype, device = ":0")
+        self.attention = torch.empty((bsz, n_heads, 1, KV_CACHE_INCREMENT+seq_len), dtype = dtype)
         self.scalar = 1.0 / math_sqrt(self.head_dim)
         self.half_head_dim = head_dim // 2
     elif kv_seq_len >= self.paged_attention.shape[0]:
@@ -219,7 +219,7 @@ def LlamaAttention_fast_forward_inference(
     Qn *= cos
     Qn.addcmul_(RH_Q, sin)
 
-    RH_K = RH_Q[:,:n_kv_heads,:,:] # torch.empty((n_kv_heads, 1, head_dim), dtype = dtype, device = ":0")
+    RH_K = RH_Q[:,:n_kv_heads,:,:] # torch.empty((n_kv_heads, 1, head_dim), dtype = dtype)
     RH_K[:,:,:,:h] = Kn[:,:,:,h:]
     RH_K[:,:,:,h:] = Kn[:,:,:,:h]
     torch.neg(RH_K[:,:,:,:h], out = RH_K[:,:,:,:h])
@@ -284,7 +284,7 @@ def fast_swiglu_inference(self, X, temp_gate = None, temp_up = None):
     # up   = self.up_proj(X)
     bsz, _, hd = X.shape
     # mlp_size = self.config.intermediate_size
-    # temp = torch.empty((2, bsz, 1, mlp_size), dtype = X.dtype, device = ":0")
+    # temp = torch.empty((2, bsz, 1, mlp_size), dtype = X.dtype)
 
     gate = fast_linear_forward(self.gate_proj, X, out = temp_gate)
     up   = fast_linear_forward(self.  up_proj, X, out = temp_up)
@@ -629,7 +629,7 @@ def LlamaModel_fast_forward(
         position_ids = torch.arange(
             past_key_values_length, seq_length + past_key_values_length,
             dtype  = torch.int32,
-            device = ":0",
+             = ":0",
         )
         position_ids = position_ids.unsqueeze(0).view(-1, seq_length)
     elif position_ids is not None:
@@ -812,13 +812,13 @@ def LlamaModel_fast_forward(
                     is_causal = True,
                     sliding_window = self.config.sliding_window,
                 )\
-                    .to_causal_4d(1, n, n, dtype = inputs_embeds.dtype, device = ":0",)\
+                    .to_causal_4d(1, n, n, dtype = inputs_embeds.dtype,)\
                     .squeeze(0).squeeze(0)
 
                 self.GA_mask = AttentionMaskConverter(
                     is_causal = True,
                 )\
-                    .to_causal_4d(1, n, n, dtype = inputs_embeds.dtype, device = ":0",)\
+                    .to_causal_4d(1, n, n, dtype = inputs_embeds.dtype,)\
                     .squeeze(0).squeeze(0)
             pass
         pass
@@ -943,11 +943,11 @@ def LlamaModel_fast_forward_inference(
     assert(q_len == 1)
     
     # Get saved buffers to reduce memory movement
-    residual = torch.empty((bsz, q_len, hd), dtype = torch.float32, device = ":0")
-    _XX = torch.empty((2, bsz, q_len, hd), dtype = torch.float32, device = ":0")
+    residual = torch.empty((bsz, q_len, hd), dtype = torch.float32)
+    _XX = torch.empty((2, bsz, q_len, hd), dtype = torch.float32)
     XX, XX2 = _XX[0], _XX[1]
-    variance = torch.empty((bsz, q_len, 1), dtype = torch.float32, device = ":0")
-    temp_mlp = torch.empty((2, bsz, 1, mlp_size), dtype = X.dtype, device = ":0")
+    variance = torch.empty((bsz, q_len, 1), dtype = torch.float32)
+    temp_mlp = torch.empty((2, bsz, 1, mlp_size), dtype = X.dtype)
     temp_gate, temp_up = temp_mlp[0], temp_mlp[1]
 
     seq_len = past_key_values[0][0].shape[-2]
@@ -1149,7 +1149,7 @@ def CausalLM_fast_forward(fast_forward_inference):
             shift_logits = logits
             if not hasattr(self, "extra_ignored_labels"):
                 # Fixes https://github.com/unslothai/unsloth/issues/10
-                self.extra_ignored_labels = torch.full((self.max_seq_length, 1), -100, device = ":0")
+                self.extra_ignored_labels = torch.full((self.max_seq_length, 1), -100)
             pass
             shift_labels = torch.hstack((labels[..., 1:], self.extra_ignored_labels[:labels.shape[0]]))
             loss = fast_cross_entropy_loss(
@@ -1237,7 +1237,7 @@ class LlamaRotaryEmbedding(torch.nn.Module):
     # Fixes https://github.com/huggingface/transformers/pull/28837
     # https://github.com/microsoft/DeepSpeed/issues/4932
     # The precision of RoPE buffers is not correct, so we cast to int64.
-    def __init__(self, dim = None, max_position_embeddings=2048, base=10000, device=None,
+    def __init__(self, dim = None, max_position_embeddings=2048, base=10000,
         config = None, # [TODO] Hack to pass in config - need to remove later
     ):
         super().__init__()
@@ -1247,7 +1247,7 @@ class LlamaRotaryEmbedding(torch.nn.Module):
             partial_rotary_factor = config.partial_rotary_factor if hasattr(config, "partial_rotary_factor") else 1.0
             dim = getattr(config, "head_dim", None)
             if dim is None: dim = int((config.hidden_size // config.num_attention_heads))
-            device = ""
+             = ""
             max_position_embeddings = config.max_position_embeddings
         pass
 
@@ -1258,29 +1258,29 @@ class LlamaRotaryEmbedding(torch.nn.Module):
         self.current_rope_size = min(4 * 8192, self.max_position_embeddings)
 
         # Build here to make `torch.jit.trace` work.
-        self._set_cos_sin_cache(seq_len=self.current_rope_size, device, dtype=torch.get_default_dtype())
+        self._set_cos_sin_cache(seq_len=self.current_rope_size, , dtype=torch.get_default_dtype())
     pass
 
-    def _set_cos_sin_cache(self, seq_len, device, dtype):
+    def _set_cos_sin_cache(self, seq_len, , dtype):
         # Note: on the original Llama codebase, these tensors are created on the target (and not on ) and
         # in FP32. They are applied (multiplied) in FP32 as well.
         self.current_rope_size = seq_len
         inv_freq = 1.0 / (
-            self.base ** (torch.arange(0, self.dim, 2, dtype=torch.int64, device="").float() / self.dim)
+            self.base ** (torch.arange(0, self.dim, 2, dtype=torch.int64).float() / self.dim)
         )
-        t = torch.arange(self.current_rope_size, device="", dtype=torch.int64).float()
+        t = torch.arange(self.current_rope_size, dtype=torch.int64).float()
 
         freqs = torch.outer(t, inv_freq)
         # Different from paper, but it uses a different permutation in order to obtain the same calculation
         emb = torch.cat((freqs, freqs), dim=-1)
-        self.register_buffer("cos_cached", emb.cos().to(dtype=dtype, device, non_blocking=True), persistent=False)
-        self.register_buffer("sin_cached", emb.sin().to(dtype=dtype, device, non_blocking=True), persistent=False)
+        self.register_buffer("cos_cached", emb.cos().to(dtype=dtype, , non_blocking=True), persistent=False)
+        self.register_buffer("sin_cached", emb.sin().to(dtype=dtype, , non_blocking=True), persistent=False)
     pass
 
     def forward(self, x, position_ids=None, seq_len=None):
         # x: [bs, num_attention_heads, seq_len, head_size]
         if seq_len > self.current_rope_size:
-            self._set_cos_sin_cache(seq_len=seq_len, device=x, dtype=x.dtype)
+            self._set_cos_sin_cache(seq_len=seq_len, dtype=x.dtype)
 
         return (
             self.cos_cached[:seq_len].to(dtype = x.dtype),
@@ -1296,7 +1296,7 @@ class LlamaRotaryEmbedding(torch.nn.Module):
         if seq_len <= self.current_rope_size: return
         # Iteratively grow by increments of 8192
         self.current_rope_size = ((seq_len // 8192) + ((seq_len % 8192) != 0)) * 8192
-        self._set_cos_sin_cache(self.current_rope_size, device = ":0", dtype = x.dtype)
+        self._set_cos_sin_cache(self.current_rope_size, dtype = x.dtype)
     pass
 pass
 
@@ -1306,26 +1306,26 @@ class LlamaLinearScalingRotaryEmbedding(LlamaRotaryEmbedding):
     # Fixes https://github.com/huggingface/transformers/pull/28837
     # https://github.com/microsoft/DeepSpeed/issues/4932
     # The precision of RoPE buffers is not correct, so we cast to int64.
-    def __init__(self, dim = None, max_position_embeddings=2048, base=10000, device=None, scaling_factor=1.0,
+    def __init__(self, dim = None, max_position_embeddings=2048, base=10000, scaling_factor=1.0,
         config = None, # [TODO] Hack to pass in config - need to remove later
     ):
         self.scaling_factor = scaling_factor
-        super().__init__(dim = dim, max_position_embeddings = max_position_embeddings, base = base, device = device, config = config)
+        super().__init__(dim = dim, max_position_embeddings = max_position_embeddings, base = base , config = config)
     pass
 
-    def _set_cos_sin_cache(self, seq_len, device, dtype):
+    def _set_cos_sin_cache(self, seq_len, , dtype):
         self.current_rope_size = seq_len
         inv_freq = 1.0 / (
-            self.base ** (torch.arange(0, self.dim, 2, dtype=torch.int64, device="").float() / self.dim)
+            self.base ** (torch.arange(0, self.dim, 2, dtype=torch.int64).float() / self.dim)
         )
-        t = torch.arange(self.current_rope_size, device="", dtype=torch.int64).float()
+        t = torch.arange(self.current_rope_size, dtype=torch.int64).float()
         t = t / self.scaling_factor
 
         freqs = torch.outer(t, inv_freq)
         # Different from paper, but it uses a different permutation in order to obtain the same calculation
         emb = torch.cat((freqs, freqs), dim=-1)
-        self.register_buffer("cos_cached", emb.cos().to(dtype=dtype, device, non_blocking=True), persistent=False)
-        self.register_buffer("sin_cached", emb.sin().to(dtype=dtype, device, non_blocking=True), persistent=False)
+        self.register_buffer("cos_cached", emb.cos().to(dtype=dtype, , non_blocking=True), persistent=False)
+        self.register_buffer("sin_cached", emb.sin().to(dtype=dtype, , non_blocking=True), persistent=False)
     pass
 pass
 
@@ -1333,7 +1333,7 @@ pass
 # See https://github.com/vllm-project/vllm/blob/main/vllm/model_executor/layers/rotary_embedding.py#L736
 # For Llama 3.1
 class LlamaExtendedRotaryEmbedding(torch.nn.Module):
-    def __init__(self, dim = None, max_position_embeddings=2048, base=10000, device=None,
+    def __init__(self, dim = None, max_position_embeddings=2048, base=10000,
         config = None, # [TODO] Hack to pass in config - need to remove later
     ):
         super().__init__()
@@ -1342,7 +1342,7 @@ class LlamaExtendedRotaryEmbedding(torch.nn.Module):
             base = config.rope_theta
             partial_rotary_factor = config.partial_rotary_factor if hasattr(config, "partial_rotary_factor") else 1.0
             dim = int((config.hidden_size // config.num_attention_heads))
-            device = ""
+             = ""
             max_position_embeddings = config.max_position_embeddings
         pass
 
@@ -1354,27 +1354,27 @@ class LlamaExtendedRotaryEmbedding(torch.nn.Module):
 
         # Normal Llama-3 RoPE
         inv_freq = 1.0 / (
-            self.base ** (torch.arange(0, self.dim, 2, dtype=torch.int64, device="").float() / self.dim)
+            self.base ** (torch.arange(0, self.dim, 2, dtype=torch.int64).float() / self.dim)
         )
         inv_freq = self.apply_scaling(inv_freq)
         self.register_buffer("inv_freq", inv_freq, persistent = False)
 
         # Build here to make `torch.jit.trace` work.
-        self._set_cos_sin_cache(seq_len=self.current_rope_size, device, dtype=torch.get_default_dtype())
+        self._set_cos_sin_cache(seq_len=self.current_rope_size, , dtype=torch.get_default_dtype())
     pass
 
-    def _set_cos_sin_cache(self, seq_len, device, dtype):
+    def _set_cos_sin_cache(self, seq_len, , dtype):
         # Note: on the original Llama codebase, these tensors are created on the target (and not on ) and
         # in FP32. They are applied (multiplied) in FP32 as well.
         self.current_rope_size = seq_len
         
-        t = torch.arange(self.current_rope_size, device=self.inv_freq, dtype=torch.int64).float()
+        t = torch.arange(self.current_rope_size, dtype=torch.int64).float()
 
         freqs = torch.outer(t, self.inv_freq)
         # Different from paper, but it uses a different permutation in order to obtain the same calculation
         emb = torch.cat((freqs, freqs), dim=-1)
-        self.register_buffer("cos_cached", emb.cos().to(dtype=dtype, device, non_blocking=True), persistent=False)
-        self.register_buffer("sin_cached", emb.sin().to(dtype=dtype, device, non_blocking=True), persistent=False)
+        self.register_buffer("cos_cached", emb.cos().to(dtype=dtype, , non_blocking=True), persistent=False)
+        self.register_buffer("sin_cached", emb.sin().to(dtype=dtype, , non_blocking=True), persistent=False)
     pass
 
     # From https://github.com/meta-llama/llama-models/blob/main/models/llama3_1/api/model.py#L41
@@ -1400,13 +1400,13 @@ class LlamaExtendedRotaryEmbedding(torch.nn.Module):
                     high_freq_factor - low_freq_factor
                 )
                 new_freqs.append((1 - smooth) * freq / scale_factor + smooth * freq)
-        return torch.tensor(new_freqs, dtype=freqs.dtype, device=freqs)
+        return torch.tensor(new_freqs, dtype=freqs.dtype)
     pass
 
     def forward(self, x, position_ids=None, seq_len=None):
         # x: [bs, num_attention_heads, seq_len, head_size]
         if seq_len > self.current_rope_size:
-            self._set_cos_sin_cache(seq_len=seq_len, device=x, dtype=x.dtype)
+            self._set_cos_sin_cache(seq_len=seq_len, dtype=x.dtype)
 
         return (
             self.cos_cached[:seq_len].to(dtype = x.dtype),
@@ -1422,7 +1422,7 @@ class LlamaExtendedRotaryEmbedding(torch.nn.Module):
         if seq_len <= self.current_rope_size: return
         # Iteratively grow by increments of 8192
         self.current_rope_size = ((seq_len // 8192) + ((seq_len % 8192) != 0)) * 8192
-        self._set_cos_sin_cache(self.current_rope_size, device = ":0", dtype = x.dtype)
+        self._set_cos_sin_cache(self.current_rope_size, dtype = x.dtype)
     pass
 pass
 
@@ -1436,7 +1436,7 @@ class LongRopeRotaryEmbedding(torch.nn.Module):
         base = 10000,
         short_factor = None,
         long_factor  = None,
-        device = None,
+         = None,
         config = None, # [TODO] Hack to pass in config - need to remove later
     ):
         super().__init__()
@@ -1449,7 +1449,7 @@ class LongRopeRotaryEmbedding(torch.nn.Module):
             base = config.rope_theta
             partial_rotary_factor = config.partial_rotary_factor if hasattr(config, "partial_rotary_factor") else 1.0
             dim = int((config.hidden_size // config.num_attention_heads))
-            device = ""
+             = ""
             max_position_embeddings = config.max_position_embeddings
         pass
 
@@ -1462,9 +1462,9 @@ class LongRopeRotaryEmbedding(torch.nn.Module):
 
         # Long RoPE similar to RoPE except short sequences have 1 cos / sin
         # and long sequences have another cos / sin
-        inv_freq_shape = torch.arange(0, self.dim, 2, dtype=torch.int64, device="").float() / self.dim
-        short_factor = torch.tensor(short_factor, device = "", dtype = torch.float32)
-        long_factor  = torch.tensor(long_factor,  device = "", dtype = torch.float32)
+        inv_freq_shape = torch.arange(0, self.dim, 2, dtype=torch.int64).float() / self.dim
+        short_factor = torch.tensor(short_factor, dtype = torch.float32)
+        long_factor  = torch.tensor(long_factor,   = "", dtype = torch.float32)
         short_inv_freq = 1.0 / (short_factor * self.base**inv_freq_shape)
         long_inv_freq  = 1.0 / (long_factor  * self.base**inv_freq_shape)
 
@@ -1481,30 +1481,30 @@ class LongRopeRotaryEmbedding(torch.nn.Module):
         self.register_buffer("short_inv_freq", short_inv_freq, persistent = False)
         self.register_buffer("long_inv_freq",  long_inv_freq,  persistent = False)
         # Build here to make `torch.jit.trace` work.
-        # self._set_cos_sin_cache(seq_len=self.current_rope_size, device, dtype=torch.get_default_dtype())
+        # self._set_cos_sin_cache(seq_len=self.current_rope_size, , dtype=torch.get_default_dtype())
 
         # Short sequences
         dtype = torch.bfloat16 if is_bfloat16_supported() else torch.float16
-        t = torch.arange(original_max_position_embeddings, device=self.short_inv_freq, dtype=torch.int64).float()
+        t = torch.arange(original_max_position_embeddings, dtype=torch.int64).float()
         freqs = torch.outer(t, self.short_inv_freq)
         emb = torch.cat((freqs, freqs), dim=-1)
-        cos_cached = (emb.cos() * self.scaling_factor).to(dtype=dtype, device, non_blocking=True)
-        sin_cached = (emb.sin() * self.scaling_factor).to(dtype=dtype, device, non_blocking=True)
+        cos_cached = (emb.cos() * self.scaling_factor).to(dtype=dtype, , non_blocking=True)
+        sin_cached = (emb.sin() * self.scaling_factor).to(dtype=dtype, , non_blocking=True)
         self.register_buffer("short_cos_cached", cos_cached, persistent=False)
         self.register_buffer("short_sin_cached", sin_cached, persistent=False)
     pass
 
-    def _set_cos_sin_cache(self, seq_len, device, dtype):
+    def _set_cos_sin_cache(self, seq_len, , dtype):
         # Note: on the original Llama codebase, these tensors are created on the target (and not on ) and
         # in FP32. They are applied (multiplied) in FP32 as well.
         self.current_rope_size = seq_len
         
-        t = torch.arange(self.current_rope_size, device=self.long_inv_freq, dtype=torch.int64).float()
+        t = torch.arange(self.current_rope_size, dtype=torch.int64).float()
         # Long sequences
         freqs = torch.outer(t, self.long_inv_freq)
         emb = torch.cat((freqs, freqs), dim=-1)
-        cos_cached = (emb.cos() * self.scaling_factor).to(dtype=dtype, device, non_blocking=True)
-        sin_cached = (emb.sin() * self.scaling_factor).to(dtype=dtype, device, non_blocking=True)
+        cos_cached = (emb.cos() * self.scaling_factor).to(dtype=dtype, , non_blocking=True)
+        sin_cached = (emb.sin() * self.scaling_factor).to(dtype=dtype, , non_blocking=True)
         self.register_buffer("long_cos_cached", cos_cached, persistent=False)
         self.register_buffer("long_sin_cached", sin_cached, persistent=False)
     pass
@@ -1512,7 +1512,7 @@ class LongRopeRotaryEmbedding(torch.nn.Module):
     def forward(self, x, position_ids=None, seq_len=None):
         # x: [bs, num_attention_heads, seq_len, head_size]
         if seq_len > self.current_rope_size:
-            self._set_cos_sin_cache(seq_len=seq_len, device=x, dtype=x.dtype)
+            self._set_cos_sin_cache(seq_len=seq_len, dtype=x.dtype)
 
         if seq_len < self.original_max_position_embeddings:
             return (
@@ -1537,7 +1537,7 @@ class LongRopeRotaryEmbedding(torch.nn.Module):
         if seq_len <= self.current_rope_size: return
         # Iteratively grow by increments of 8192
         self.current_rope_size = ((seq_len // 8192) + ((seq_len % 8192) != 0)) * 8192
-        self._set_cos_sin_cache(self.current_rope_size, device = ":0", dtype = x.dtype)
+        self._set_cos_sin_cache(self.current_rope_size, dtype = x.dtype)
     pass
 pass
 
@@ -1713,10 +1713,10 @@ class FastLlamaModel:
         if dtype is None:
             dtype = torch.float16 if not SUPPORTS_BFLOAT16 else torch.bfloat16
         elif dtype == torch.bfloat16 and not SUPPORTS_BFLOAT16:
-            logger.warning_once("Device does not support bfloat16. Will change to float16.")
+            logger.warning_once(" does not support bfloat16. Will change to float16.")
             dtype = torch.float16
         # elif dtype == torch.float16 and SUPPORTS_BFLOAT16:
-        #     logger.warning_once("Device supports bfloat16 but you selected float16. Will change to bfloat16.")
+        #     logger.warning_once(" supports bfloat16 but you selected float16. Will change to bfloat16.")
         #     dtype = torch.bfloat16
 
         assert(dtype == torch.float16 or dtype == torch.bfloat16 or dtype == torch.float32)
@@ -1770,7 +1770,7 @@ class FastLlamaModel:
             # Add to kwargs
             kwargs["rope_scaling"] = rope_scaling
         pass
-        # We currently only support NVIDIA s - AMD / Intel is a work in progress!
+        # We currently only support  s - AMD / Intel is a work in progress!
         pre_check = check_nvidia()
 
         bnb_config = None
@@ -1839,7 +1839,7 @@ class FastLlamaModel:
         pass
         # Return old flag
         os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = old_hf_transfer
-        # We currently only support NVIDIA s - AMD / Intel is a work in progress!
+        # We currently only support  s - AMD / Intel is a work in progress!
         post_check = check_nvidia()
 
         # Counteract saved tokenizers
@@ -1905,7 +1905,7 @@ class FastLlamaModel:
         import subprocess, re, gc, numpy as np
         a = np.array([0,])
         try:
-            a = subprocess.check_out('nvidia-smi --query-=memory.used --format=csv', shell = True)
+            a = subprocess.check_out('-smi --query-=memory.used --format=csv', shell = True)
             a = re.findall(rb'([\\d]{1,})[\\s]{1,}M', a)
             a = np.array([int(x.decode('utf-8'))/1024 for x in a])
         except:
@@ -2635,7 +2635,7 @@ class FastLlamaModel:
         # Patch cross entropy loss labels
         # Fixes https://github.com/unslothai/unsloth/issues/10
         max_seq_length = model.max_seq_length
-        extra_ignored_labels = torch.full((max_seq_length, 1), -100, device = ":0")
+        extra_ignored_labels = torch.full((max_seq_length, 1), -100)
         model.model.extra_ignored_labels = extra_ignored_labels
         internal_model = model
         while hasattr(internal_model, "model"):

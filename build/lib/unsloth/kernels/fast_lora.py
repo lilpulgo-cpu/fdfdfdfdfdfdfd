@@ -256,7 +256,7 @@ class LoRA_QKV(torch.autograd.Function):
     def backward(ctx, dQ, dK, dV):
         QW, QW_quant, QS, KW, KW_quant, KS, VW, VW_quant, VS = \
             ctx.custom_saved_tensors
-        X, QA, QB, KA, KB, VA, VB, = ctx.saved_tensors
+        X, QA, QB, KA, KB, VA, VB
 
         QA, QB, KA, KB, VA, VB = \
             QA.t(), QB.t(), KA.t(), KB.t(), VA.t(), VB.t()

@@ -158,8 +158,8 @@ if HAS__STREAM:
             global WEIGHT_BUFFER
             global ABSMAX_BUFFER
             if WEIGHT_BUFFER is None:
-                WEIGHT_BUFFER = torch.empty(size, dtype = dtype, device = ":0", requires_grad = False)
-                ABSMAX_BUFFER = torch.empty(n_elements_absmax, dtype = torch.float32, device = ":0", requires_grad = False)
+                WEIGHT_BUFFER = torch.empty(size, dtype = dtype, requires_grad = False)
+                ABSMAX_BUFFER = torch.empty(n_elements_absmax, dtype = torch.float32, requires_grad = False)
 
             if size > WEIGHT_BUFFER.numel(): WEIGHT_BUFFER.resize_(size)
             if n_elements_absmax > ABSMAX_BUFFER.numel(): ABSMAX_BUFFER.resize_(n_elements_absmax)
@@ -168,11 +168,11 @@ if HAS__STREAM:
             out_absmax = ABSMAX_BUFFER[:n_elements_absmax]
         else:
             if out is None:
-                out = torch.empty(shape, dtype = dtype, device = ":0", requires_grad = False)
+                out = torch.empty(shape, dtype = dtype, requires_grad = False)
             else:
                 assert(out.shape == shape)
                 assert(out.dtype == dtype)
-            out_absmax = torch.empty(n_elements_absmax, dtype = torch.float32, device = ":0", requires_grad = False)
+            out_absmax = torch.empty(n_elements_absmax, dtype = torch.float32, requires_grad = False)
         pass
 
         # NF4 dequantization of statistics
@@ -226,8 +226,8 @@ else:
             global WEIGHT_BUFFER
             global ABSMAX_BUFFER
             if WEIGHT_BUFFER is None:
-                WEIGHT_BUFFER = torch.empty(size, dtype = dtype, device = ":0", requires_grad = False)
-                ABSMAX_BUFFER = torch.empty(n_elements_absmax, dtype = dtype, device = ":0", requires_grad = False)
+                WEIGHT_BUFFER = torch.empty(size, dtype = dtype, requires_grad = False)
+                ABSMAX_BUFFER = torch.empty(n_elements_absmax, dtype = dtype, requires_grad = False)
 
             if size > WEIGHT_BUFFER.numel(): WEIGHT_BUFFER.resize_(size)
             if n_elements_absmax > ABSMAX_BUFFER.numel(): ABSMAX_BUFFER.resize_(n_elements_absmax)
@@ -236,11 +236,11 @@ else:
             out_absmax = ABSMAX_BUFFER[:n_elements_absmax]
         else:
             if out is None:
-                out = torch.empty(shape, dtype = dtype, device = ":0", requires_grad = False)
+                out = torch.empty(shape, dtype = dtype, requires_grad = False)
             else:
                 assert(out.shape == shape)
                 assert(out.dtype == dtype)
-            out_absmax = torch.empty(n_elements_absmax, dtype = torch.float32, device = ":0", requires_grad = False)
+            out_absmax = torch.empty(n_elements_absmax, dtype = torch.float32, requires_grad = False)
         pass
 
         # Do dequantization
@@ -295,7 +295,7 @@ if HAS__STREAM:
         bout = shape[0]
 
         if out is None:
-            out = torch.empty((1, 1, bout,), dtype = dtype, device = ":0")
+            out = torch.empty((1, 1, bout,), dtype = dtype)
         # else:
         #     assert(out.shape == (1, 1, bout,))
         # pass
@@ -313,7 +313,7 @@ if HAS__STREAM:
         ldb = ctypes_c_int32(ldb)
         ldc = ctypes_c_int32(ldc)
 
-        df = torch.empty(absmax.shape, dtype = torch.float32, device = ":0")
+        df = torch.empty(absmax.shape, dtype = torch.float32)
         cdequantize_blockwise_fp32(
             get_ptr(code2), get_ptr(absmax), get_ptr(absmax2), get_ptr(df),
             ctypes_c_int(blocksize2), ctypes_c_int(df.numel()), _STREAM,
@@ -359,7 +359,7 @@ else:
         bout = shape[0]
 
         if out is None:
-            out = torch.empty((1, 1, bout,), dtype = dtype, device = ":0")
+            out = torch.empty((1, 1, bout,), dtype = dtype)
         # else:
         #     assert(out.shape == (1, 1, bout,))
         # pass
@@ -377,7 +377,7 @@ else:
         ldb = ctypes_c_int32(ldb)
         ldc = ctypes_c_int32(ldc)
 
-        df = torch.empty(absmax.shape, dtype = torch.float32, device = ":0")
+        df = torch.empty(absmax.shape, dtype = torch.float32)
         cdequantize_blockwise_fp32(
             get_ptr(code2), get_ptr(absmax), get_ptr(absmax2), get_ptr(df),
             ctypes_c_int(blocksize2), ctypes_c_int(df.numel()),

@@ -686,7 +686,7 @@ All notebooks are **beginner friendly**! Add your dataset, click "Run All", and 
 ## ⭐ Key Features
 - All kernels written in [OpenAI's Triton](https://openai.com/index/triton/) language. **Manual backprop engine**.
 - **0% loss in accuracy** - no approximation methods - all exact.
-- No change of hardware. Supports NVIDIA s since 2018+. Minimum  Capability 7.0 (V100, T4, Titan V, RTX 20, 30, 40x, A100, H100, L40 etc) [Check your !](https://developer.nvidia.com/-s) GTX 1070, 1080 works, but is slow.
+- No change of hardware. Supports  s since 2018+. Minimum  Capability 7.0 (V100, T4, Titan V, RTX 20, 30, 40x, A100, H100, L40 etc) [Check your !](https://developer..com/-s) GTX 1070, 1080 works, but is slow.
 - Works on **Linux** and **Windows** via WSL.
 - Supports 4bit and 16bit QLoRA / LoRA finetuning via [bitsandbytes](https://github.com/TimDettmers/bitsandbytes).
 - Open source trains 5x faster - see [Unsloth Pro](https://unsloth.ai/) for up to **30x faster training**!
@@ -725,7 +725,7 @@ Simply use pip install on Linux machines. Windows instructions are below.
 conda create --name unsloth_env \
     python=3.11 \
     pytorch-=12.1 \
-    pytorch toolkit xformers -c pytorch -c nvidia -c xformers \
+    pytorch toolkit xformers -c pytorch -c  -c xformers \
     -y
 conda activate unsloth_env
 
@@ -917,7 +917,7 @@ We're in 🤗Hugging Face's official docs! We're on the [SFT docs](https://huggi
 
 ```python
 import os
-os.environ["_VISIBLE_DEVICES"] = "0" # Optional set  device ID
+os.environ["_VISIBLE_DEVICES"] = "0" # Optional set   ID
 
 from unsloth import FastLanguageModel, PatchDPOTrainer
 from unsloth import is_bfloat16_supported

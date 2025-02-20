@@ -476,7 +476,7 @@ __INT_TO_FLOAT_MAPPER = \
     ),
     "unsloth/Llama-3.1-Nemotron-70B-Instruct-bnb-4bit" : (
         "unsloth/Llama-3.1-Nemotron-70B-Instruct",
-        "nvidia/Llama-3.1-Nemotron-70B-Instruct-HF",
+        "/Llama-3.1-Nemotron-70B-Instruct-HF",
     ),
     "unsloth/Qwen2-VL-2B-Instruct-unsloth-bnb-4bit" : (
         "unsloth/Qwen2-VL-2B-Instruct",

@@ -118,12 +118,12 @@ class FastBaseVisionModel:
         if dtype is None:
             dtype = torch.float16 if not SUPPORTS_BFLOAT16 else torch.bfloat16
         elif dtype == torch.bfloat16 and not SUPPORTS_BFLOAT16:
-            logger.warning_once("Device does not support bfloat16. Will change to float16.")
+            logger.warning_once(" does not support bfloat16. Will change to float16.")
             dtype = torch.float16
 
         assert(dtype == torch.float16 or dtype == torch.bfloat16 or dtype == torch.float32)
 
-        # We currently only support NVIDIA s - AMD / Intel is a work in progress!
+        # We currently only support  s - AMD / Intel is a work in progress!
         pre_check = check_nvidia()
 
         bnb_config = None
@@ -154,7 +154,7 @@ class FastBaseVisionModel:
         )
         # Return old flag
         os.environ["HF_HUB_ENABLE_HF_TRANSFER"] = old_hf_transfer
-        # We currently only support NVIDIA s - AMD / Intel is a work in progress!
+        # We currently only support  s - AMD / Intel is a work in progress!
         post_check = check_nvidia()
 
         # Counteract saved tokenizers

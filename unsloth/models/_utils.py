@@ -418,7 +418,7 @@ if xformers_version is not None and Version(xformers_version) >= Version("0.0.27
         from accelerate.utils.operations import *
         send_to_device = inspect.getsource(accelerate.utils.operations.send_to_device)
         send_to_device = re.sub(
-            r"([ ]{4,})return tensor\.to\(device\)",
+            r"([ ]{4,})return tensor\.to\(\)",
             r"\1try: return tensor.to)\n\1except: return tensor",
             send_to_device,
         ).replace("def send_to_device", "def _fixed_send_to_device")
@@ -716,7 +716,7 @@ BitsAndBytesConfig__init__ = BitsAndBytesConfig__init__.replace(
 )
 
 def _prepare_backend(
-    self, cpu = True, sagemaker_dp = False, backend: str = None,
+    self, sagemaker_dp = False, backend: str = None,
 ) -> tuple[str, DistributedType]:
     return None, DistributedType.NO
 pass
@@ -962,7 +962,7 @@ def check_nvidia():
     # Unsloth doesn't work yet on AMD devices - we're working on it!
     out = np.array([0,])
     try:
-        out = subprocess.check_out("nvidia-smi --query-=memory.used --format=csv", shell = True)
+        
         out = re.findall(rb'([\d]{1,})[\s]{1,}M', out)
         out = np.array([int(x.decode('utf-8'))/1024 for x in out])
     except:

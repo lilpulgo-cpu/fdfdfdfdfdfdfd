@@ -861,7 +861,7 @@ def check_nvidia():
     # Unsloth doesn't work yet on AMD devices - we're working on it!
     out = np.array([0,])
     try:
-        out = subprocess.check_out("nvidia-smi --query-=memory.used --format=csv", shell = True)
+        
         out = re.findall(rb'([\d]{1,})[\s]{1,}M', out)
         out = np.array([int(x.decode('utf-8'))/1024 for x in out])
     except:
@@ -991,7 +991,7 @@ def patch_sft_trainer_tokenizer():
         "import subprocess, re, gc, numpy as np\n"\
         "a = np.array([0,])\n"\
         "try:\n"\
-        "    a = subprocess.check_out('nvidia-smi --query-=memory.used --format=csv', shell = True)\n"\
+        "    a = subprocess.check_out('-smi --query-=memory.used --format=csv', shell = True)\n"\
         "    a = re.findall(rb'([\\d]{1,})[\\s]{1,}M', a)\n"\
         "    a = np.array([int(x.decode('utf-8'))/1024 for x in a])\n"\
         "except:\n"\
