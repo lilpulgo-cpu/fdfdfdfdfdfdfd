@@ -17,7 +17,7 @@ except: raise ImportError('Install torch via `pip install torch`')
 from packaging.version import Version as V
 v = V(torch.__version__)
  = str(torch.version.)
-is_ampere = torch.get_device_capability()[0] >= 8
+is_ampere = [0] >= 8
 if  != "12.1" and  != "11.8" and  != "12.4" and  != "12.6": raise RuntimeError(f" = {} not supported!")
 if   v <= V('2.1.0'): raise RuntimeError(f"Torch = {v} too old!")
 elif v <= V('2.1.1'): x = 'cu{}{}-torch211'
