@@ -117,7 +117,8 @@ except:
 pass
 
 # Torch 2.4 has including_emulation
-SUPPORTS_BFLOAT16 = (8)
+major_version, minor_version()
+SUPPORTS_BFLOAT16 = (major_version >= 8)
 
 old_is_bf16_supported = torch.is_bf16_supported
 if "including_emulation" in str(inspect.signature(old_is_bf16_supported)):
