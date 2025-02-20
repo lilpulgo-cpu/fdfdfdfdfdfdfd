@@ -60,7 +60,7 @@ def fast_geglu_inference(self, X):
     # up   = self.up_proj(X)
     bsz, _, hd = X.shape
     # mlp_size = self.config.intermediate_size
-    # temp = torch.empty((2, bsz, 1, mlp_size), dtype = X.dtype,  = ":0")
+    # temp = torch.empty((2, bsz, 1, mlp_size), dtype = X.dtype)
 
     gate = fast_linear_forward(self.gate_proj, X)#, out = temp[0])
     up   = fast_linear_forward(self.  up_proj, X)#, out = temp[1])
@@ -87,7 +87,7 @@ def GemmaDecoderLayer_fast_forward(
     *args, **kwargs,
 ):
     if use_cache and hasattr(self, "_flag_for_generation"): #past_key_value is not None:
-        out_weight = torch.empty(self.input_layernorm.weight.shape, dtype = torch.float32,  = ":0")
+        out_weight = torch.empty(self.input_layernorm.weight.shape, dtype = torch.float32)
 
         # Self Attention
         residual = hidden_states
@@ -149,7 +149,7 @@ def GemmaModel_fast_forward_inference(
     position_ids,
     attention_mask = None,
 ):
-    out_weight = torch.empty_like(self.model.layers[0].input_layernorm.weight, dtype = torch.float32,  = ":0")
+    out_weight = torch.empty_like(self.model.layers[0].input_layernorm.weight, dtype = torch.float32)
     input_ids = input_ids[:,:self.max_seq_length]
     hidden_states = self.model.embed_tokens(input_ids)
     hidden_states = hidden_states.to(self.config.torch_dtype)
@@ -206,7 +206,7 @@ class GemmaFixedRotaryEmbedding(torch.nn.Module):
     # Fixes https://github.com/huggingface/transformers/pull/28837
     # https://github.com/microsoft/DeepSpeed/issues/4932
     # The precision of RoPE buffers is not correct, so we cast to int64.
-    def __init__(self, dim = None, max_position_embeddings=2048, base=10000, =None,
+    def __init__(self, dim = None, max_position_embeddings=2048, base=10000,
         config = None, # [TODO] Hack to pass in config - need to remove later
     ):
         super().__init__()
@@ -236,10 +236,10 @@ class GemmaFixedRotaryEmbedding(torch.nn.Module):
 
         # The difference is we do division explicity instead of t * (1/x) ie we do t/x.
         freq_exponents = (2.0 / self.dim) * (
-            torch.arange(self.dim // 2, dtype = torch.int64,  = "").float()
+            torch.arange(self.dim // 2, dtype = torch.int64).float()
         )
         timescale = self.base**freq_exponents
-        positions = torch.arange(self.current_rope_size,  = "", dtype = torch.int64).float()
+        positions = torch.arange(self.current_rope_size, dtype = torch.int64).float()
         radians_new = positions[..., None] / timescale[None, None, :]
         radians_new = radians_new.squeeze(0)
 
@@ -254,7 +254,7 @@ class GemmaFixedRotaryEmbedding(torch.nn.Module):
     def forward(self, x, position_ids=None, seq_len=None):
         # x: [bs, num_attention_heads, seq_len, head_size]
         if seq_len > self.current_rope_size:
-            self._set_cos_sin_cache(seq_len=seq_len, =x, dtype=x.dtype)
+            self._set_cos_sin_cache(seq_len=seq_len, dtype=x.dtype)
 
         return (
             self.cos_cached[:seq_len].to(dtype=x.dtype),
@@ -270,7 +270,7 @@ class GemmaFixedRotaryEmbedding(torch.nn.Module):
         if seq_len <= self.current_rope_size: return
         # Iteratively grow by increments of 8192
         self.current_rope_size = math.ceil(seq_len / 8192) * 8192
-        self._set_cos_sin_cache(self.current_rope_size,  = ":0", dtype = x.dtype)
+        self._set_cos_sin_cache(self.current_rope_size, dtype = x.dtype)
     pass
 pass
 
@@ -280,11 +280,11 @@ class GemmaFixedLinearScalingRotaryEmbedding(GemmaFixedRotaryEmbedding):
     # Fixes https://github.com/huggingface/transformers/pull/28837
     # https://github.com/microsoft/DeepSpeed/issues/4932
     # The precision of RoPE buffers is not correct, so we cast to int64.
-    def __init__(self, dim = None, max_position_embeddings=2048, base=10000, =None, scaling_factor=1.0,
+    def __init__(self, dim = None, max_position_embeddings=2048, base=10000, scaling_factor=1.0,
         config = None, # [TODO] Hack to pass in config - need to remove later
     ):
         self.scaling_factor = scaling_factor
-        super().__init__(dim = dim, max_position_embeddings = max_position_embeddings, base = base,  = , config = config)
+        super().__init__(dim = dim, max_position_embeddings = max_position_embeddings, base = base , config = config)
     pass
 
     def _set_cos_sin_cache(self, seq_len, , dtype):
@@ -294,10 +294,10 @@ class GemmaFixedLinearScalingRotaryEmbedding(GemmaFixedRotaryEmbedding):
 
         # The difference is we do division explicity instead of t * (1/x) ie we do t/x.
         freq_exponents = (2.0 / self.dim) * (
-            torch.arange(self.dim // 2, dtype = torch.int64,  = "").float()
+            torch.arange(self.dim // 2, dtype = torch.int64).float()
         )
         timescale = self.base**freq_exponents
-        positions = torch.arange(self.current_rope_size,  = "", dtype = torch.int64).float()
+        positions = torch.arange(self.current_rope_size, dtype = torch.int64).float()
         positions = positions /  self.scaling_factor
         radians_new = positions[..., None] / timescale[None, None, :]
         radians_new = radians_new.squeeze(0)

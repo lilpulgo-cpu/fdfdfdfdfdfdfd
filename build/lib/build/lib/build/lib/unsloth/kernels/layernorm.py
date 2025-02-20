@@ -106,9 +106,9 @@ class Fast_Layernorm(torch.autograd.Function):
         n_rows, n_cols = X.shape
         BLOCK_SIZE, num_warps = calculate_settings(n_cols)
 
-        Y  = torch.empty((n_rows, n_cols), dtype = X.dtype,  = ":0")
-        r  = torch.empty(n_rows, dtype = torch.float32,  = ":0")
-        mu = torch.empty(n_rows, dtype = torch.float32,  = ":0")
+        Y  = torch.empty((n_rows, n_cols), dtype = X.dtype)
+        r  = torch.empty(n_rows, dtype = torch.float32)
+        mu = torch.empty(n_rows, dtype = torch.float32)
 
         layernorm_forward[(n_rows,)](
             Y, Y.stride(0),
@@ -171,17 +171,17 @@ def test_layernorm(
     bsz = 21, random_state = 3407, seqlen = 3341,
 ):
     from torch.nn import LayerNorm
-    layernorm = LayerNorm((dim,), eps = eps,  = "", dtype = dtype)
+    layernorm = LayerNorm((dim,), eps = eps, dtype = dtype)
     torch.manual_seed(random_state)
     torch.manual_seed(random_state)
     torch.nn.init.uniform_(layernorm.weight)
     torch.nn.init.uniform_(layernorm.bias)
-    X = torch.randn((bsz, seqlen, dim), dtype = dtype,  = "")
+    X = torch.randn((bsz, seqlen, dim), dtype = dtype)
     XX = X.clone()
     X .requires_grad_(True)
     XX.requires_grad_(True)
     Y = layernorm(X)
-    YY = torch.randn((bsz, seqlen, dim), dtype = dtype,  = "", requires_grad = True)
+    YY = torch.randn((bsz, seqlen, dim), dtype = dtype, requires_grad = True)
     Y.backward(YY)
     correct_grad = X.grad.clone()
     # from unsloth.kernels import fast_layernorm

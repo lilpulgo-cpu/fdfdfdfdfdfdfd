@@ -1310,7 +1310,7 @@ class LlamaLinearScalingRotaryEmbedding(LlamaRotaryEmbedding):
         config = None, # [TODO] Hack to pass in config - need to remove later
     ):
         self.scaling_factor = scaling_factor
-        super().__init__(dim = dim, max_position_embeddings = max_position_embeddings, base = base, config = config)
+        super().__init__(dim = dim, max_position_embeddings = max_position_embeddings, base = base , config = config)
     pass
 
     def _set_cos_sin_cache(self, seq_len, , dtype):

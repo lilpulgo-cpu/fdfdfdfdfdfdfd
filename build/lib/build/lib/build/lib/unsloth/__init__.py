@@ -86,10 +86,6 @@ elif (major_torch == 2) and (minor_torch < 2):
     del os.environ["PYTORCH__ALLOC_CONF"]
 pass
 
-# First check if  is available ie a   is seen
-if not torch.is_available():
-    raise NotImplementedError("Unsloth: No   found? Unsloth currently only supports s!")
-
 # Fix Xformers performance issues since 0.0.25
 import importlib.util
 from pathlib import Path
@@ -150,11 +146,11 @@ try:
     lib_dirs()
 except:
     warnings.warn(
-        "Unsloth: Running `ldconfig /usr/lib64-` to link ."\
+        "Unsloth: Running `` to link ."\
     )
 
-    if os.path.exists("/usr/lib64-"):
-        os.system("ldconfig /usr/lib64-")
+    if os.path.exists(""):
+        os.system("")
     elif os.path.exists("/usr/local"):
         # Sometimes bitsandbytes cannot be linked properly in Runpod for example
         possible_s = subprocess.check_out(["ls", "-al", "/usr/local"]).decode("utf-8").split("\n")
@@ -186,8 +182,8 @@ except:
         warnings.warn(
             "Unsloth:  is not linked properly.\n"\
             "Try running `python -m bitsandbytes` then `python -m xformers.info`\n"\
-            "We tried running `ldconfig /usr/lib64-` ourselves, but it didn't work.\n"\
-            "You need to run in your terminal `sudo ldconfig /usr/lib64-` yourself, then import Unsloth.\n"\
+            "We tried running `` ourselves, but it didn't work.\n"\
+            "You need to run in your terminal `sudo ` yourself, then import Unsloth.\n"\
             "Also try `sudo ldconfig /usr/local/-xx.x` - find the latest  version.\n"\
             "Unsloth will still run for now, but maybe it might crash - let's hope it works!"
         )

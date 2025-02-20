@@ -149,8 +149,8 @@ class Fast_RMS_Layernorm(torch.autograd.Function):
         num_warps  : int
         BLOCK_SIZE, num_warps = calculate_settings(n_cols)
 
-        Y = torch.empty((n_rows, n_cols), dtype = X.dtype,  = ":0")
-        r = torch.empty(n_rows, dtype = torch.float32,  = ":0")
+        Y = torch.empty((n_rows, n_cols), dtype = X.dtype)
+        r = torch.empty(n_rows, dtype = torch.float32)
 
         fx = _gemma_rms_layernorm_forward if gemma else _rms_layernorm_forward
         fx[(n_rows,)](
@@ -180,7 +180,7 @@ class Fast_RMS_Layernorm(torch.autograd.Function):
         n_cols : int
         n_rows, n_cols = dY.shape
         # dW = X
-        dX = torch.empty_like(dY,  = ":0") if ctx.GEMMA else dY
+        dX = torch.empty_like(dY) if ctx.GEMMA else dY
 
         _rms_layernorm_backward[(n_rows,)](
             dY, dY.stride(0),
@@ -264,12 +264,12 @@ def test_rms_layernorm(
     torch.manual_seed(random_state)
     torch.manual_seed(random_state)
     torch.nn.init.uniform_(layernorm.weight)
-    X = torch.randn((bsz, seqlen, dim), dtype = dtype,  = "")
+    X = torch.randn((bsz, seqlen, dim), dtype = dtype)
     XX = X.clone()
     X .requires_grad_(True)
     XX.requires_grad_(True)
     Y = layernorm(X)
-    YY = torch.randn((bsz, seqlen, dim), dtype = dtype,  = "", requires_grad = True)
+    YY = torch.randn((bsz, seqlen, dim), dtype = dtype, requires_grad = True)
     Y.backward(YY)
     correct_grad = X.grad.clone()
     # from unsloth.kernels import fast_rms_layernorm
