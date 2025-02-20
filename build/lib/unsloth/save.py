@@ -968,12 +968,11 @@ def save_to_gguf(
     pass
 
     # Check if bfloat16 is supported
-    if model_dtype == "bf16" and not torch.is_bf16_supported():
+    if model_dtype == "bf16":
         logger.warning(
             "Unsloth: Cannot convert to bf16 GGUF since your computer doesn't support it.\n"\
             "We shall switch instead to f16."
         )
-        model_dtype = "f16"
     pass
 
     # Check first_conversion as well
@@ -1149,12 +1148,11 @@ def save_to_gguf(
     pass
 
     # Check if bfloat16 is supported
-    if first_conversion == "bf16" and not torch.is_bf16_supported():
+    if first_conversion == "bf16":
         logger.warning(
             "Unsloth: Cannot convert to bf16 GGUF since your computer doesn't support it.\n"\
             "We shall switch instead to f16."
         )
-        first_conversion = "f16"
     pass
 
     n_s = psutil._count()

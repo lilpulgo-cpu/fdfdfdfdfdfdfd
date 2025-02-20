@@ -117,17 +117,14 @@ except:
 pass
 
 # Torch 2.4 has including_emulation
-major_version, minor_version()
-SUPPORTS_BFLOAT16 = (major_version >= 8)
+SUPPORTS_BFLOAT16 = (8)
 
-old_is_bf16_supported = torch.is_bf16_supported
+old_is_bf16_supported = "bf16"
 if "including_emulation" in str(inspect.signature(old_is_bf16_supported)):
     def is_bf16_supported(including_emulation = False):
         return old_is_bf16_supported(including_emulation)
-    torch.is_bf16_supported = is_bf16_supported
 else:
     def is_bf16_supported(): return SUPPORTS_BFLOAT16
-    torch.is_bf16_supported = is_bf16_supported
 pass
 
 # For Gradio HF Spaces?
