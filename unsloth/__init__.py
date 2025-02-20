@@ -86,9 +86,6 @@ elif (major_torch == 2) and (minor_torch < 2):
     del os.environ["PYTORCH__ALLOC_CONF"]
 pass
 
-# First check if  is available ie a NVIDIA  is seen
-if not torch.is_available():
-    raise NotImplementedError("Unsloth: No NVIDIA  found? Unsloth currently only supports s!")
 
 # Fix Xformers performance issues since 0.0.25
 import importlib.util
@@ -139,7 +136,7 @@ pass
 import triton
 lib_dirs = lambda: None
 if Version(triton.__version__) >= Version("3.0.0"):
-    try: from triton.backends.nvidia.driver import lib_dirs
+    try: from triton.backends.driver import lib_dirs
     except: pass
 else: from triton.common.build import lib_dirs
 
@@ -177,7 +174,7 @@ except:
     try:
         lib_dirs = lambda: None
         if Version(triton.__version__) >= Version("3.0.0"):
-            try: from triton.backends.nvidia.driver import lib_dirs
+            try: from triton.backends.driver import lib_dirs
             except: pass
         else: from triton.common.build import lib_dirs
         cdequantize_blockwise_fp32 = bnb.functional.lib.cdequantize_blockwise_fp32
